@@ -1,0 +1,155 @@
+# machine_learning_project/scripts/data_crawler.py
+
+import os
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+
+
+def crawl_cuetracker():
+    url = 'https://cuetracker.net'
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        # Save the raw HTML content to a file
+        raw_html = response.text
+        save_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'cuetracker_raw.html')
+        with open(save_path, 'wt', encoding='utf-8') as f:  # Specify encoding as 'utf-8'
+            f.write(raw_html)
+            
+        print("Raw HTML content saved to: {}".format(save_path))
+
+
+def table():
+
+    # URL of the webpage with the table
+    #url = 'https://cuetracker.net/statistics/matches-and-frames/won/all-time'
+    url ='https://www.snooker.org/res/index.asp?template=31'
+    #url = 'https://en.wikipedia.org/wiki/Judd_Trump'
+
+    # Send a GET request to the URL
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        # Parse the HTML content
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the table element
+        table = soup.find('table', class_="wikitable")
+        
+        # Extract data from the table
+        data = []
+        for row in table.find_all('tr'):
+            row_data = [cell.get_text(strip=True) for cell in row.find_all(['th', 'td'])]
+            data.append(row_data)
+        
+        # Create a pandas DataFrame from the extracted data
+        df = pd.DataFrame(data[1:], columns=data[0])
+        
+        # Print the DataFrame
+        print(df)
+        
+        # Optionally, you can save the DataFrame to a CSV file
+        df.to_csv('cuetrackerjudd_trump_data.csv', index=False)
+    else:
+        print(f"Failed to fetch data from {url}")
+
+def player_advancement():
+
+    url = "https://en.wikipedia.org/wiki/Judd_Trump"
+
+    # Send a GET request to the webpage
+    response = requests.get(url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the HTML content of the webpage
+        soup = BeautifulSoup(response.content, "html.parser")
+        
+        # Find the specific table containing player advancements in tournaments
+        table = soup.find("table", class_="wikitable")
+
+        # Read the table into a pandas DataFrame
+        dfs = pd.read_html(str(table), flavor='bs4')
+        
+        # Process the DataFrame
+        if len(dfs) > 0:
+            df = dfs[0]  # Assuming the desired table is the first one found
+            # Deal with colspan cells
+            for col in df.columns:
+                # Fill cells with colspan with the values from the cell above
+                df[col] = df[col].fillna(method='ffill')
+            # Remove rows with all NaN values
+            df.dropna(how='all', inplace=True)
+            # Reset the index
+            df.reset_index(drop=True, inplace=True)
+            
+            # Print the DataFrame
+            print(df)
+            df.to_csv('cuetrackerjudd_trump_data.csv', index=False)
+
+        else:
+            print("No tables found on the webpage.")
+    else:
+        print("Failed to retrieve webpage.")
+
+def player_recent_matches():
+    url = "https://www.snooker.org/res/index.asp?player=12"
+
+    # Send a GET request to the webpage
+    response = requests.get(url)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the HTML content of the webpage
+        soup = BeautifulSoup(response.content, "html.parser")
+        
+        # Find all <tr> elements with class name starting with 'gradeA'
+        tr_elements = soup.find_all("tr", class_=lambda x: x and x.startswith('gradeA even'))
+        print(tr_elements)
+
+  
+        
+        # Extract titles from the <td> elements within the selected <tr> elements
+        for tr in tr_elements:
+            # Find all <td> elements within the <tr> element
+            td_elements = tr.find_all("td")
+
+            
+            titles = [td.text.strip() for td in td_elements if td.get('class') and 'round' in td.get('class')]
+            if titles:
+                pass
+               # print(titles[0])
+            
+            '''first_score = [td.text.strip() for td in td_elements if td.get('class') and 'score  first-score' in td.get('class')]
+            if first_score:
+                print(first_score)
+
+            last_score = [td.text.strip() for td in td_elements if td.get('class') and 'last-score' in td.get('class')]
+            if first_score:
+                print(last_score)
+            '''
+
+            first_score = td_elements[3].text.strip()
+            last_score = td_elements[5].text.strip()
+
+            #print(first_score,last_score)
+
+            player_names = [td.text.strip() for td in td_elements if td.get('class') and 'player' in td.get('class')]
+            if player_names:
+                pass
+                #print(player_names[0], ' ', player_names[1])
+
+               
+            
+         
+    else:
+        print("Failed to retrieve webpage.")
+
+if __name__ == "__main__":
+    #crawl_cuetracker()
+    #table()
+    #player_advancement()
+    player_recent_matches()
+
