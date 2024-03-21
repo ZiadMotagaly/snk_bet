@@ -208,26 +208,82 @@ def get_table_elements():
             # Find all thead and tbody elements within the table
             thead_elements = table.find_all('thead')
             tbody_elements = table.find_all('tbody')
+            print(tbody_elements[12])
             
             # Iterate over the pairs of thead and tbody elements
             for thead, tbody in zip(thead_elements, tbody_elements):
                 # Extract text from the thead element
                 thead_text = thead.get_text(strip=True)
                 print(thead_text)
-                
-                #Extract text from the tbody element
-                tr_elements = tbody.find_all("tr", class_=lambda c: c and c.startswith('gradeA'))
+                tbodytext = tbody.get_text(strip=True)
+
+                #next_tbody = thead.find_next_sibling('tbody')
         
-                # Iterate over the <tr> elements
-                for tr in tr_elements:
-                    # Find all <td> elements within the <tr> element
-                    td_elements = tr.find_all("td")
-                    
-                    # Extract text from specific <td> elements
-                    titles = [td.text.strip() for td in td_elements if td.get('class') and 'round' in td.get('class')]
-                    print(titles[0])
+                # Check if next_tbody is found
+                if tbody:
+                # Find all tr elements with class starting with "gradeA" within the next tbody sibling
+                    tr_elements = tbody.find_all("tr", class_=lambda c: c and c.startswith('gradeA'))
+                    #print(len(tr_elements))
+            
+                    # Iterate over the tr elements
+                    for tr in tr_elements:
+                        # Find all <td> elements within the <tr> element
+                        td_elements = tr.find_all("td")
+                
+                        # Extract text from all <td> elements within the tr
+                        titles = [td.text.strip() for td in td_elements if td.get('class') and 'round' in td.get('class')]
+                        #print(titles[0])
+                        
+           
+
+
         else:
             print("Table with class 'display matches' not found.")
+
+def get_it():
+        
+    url = "https://www.snooker.org/res/index.asp?player=12"
+        #https://www.snooker.org/res/index.asp?player=12
+        #https://www.snooker.org/res/index.asp?season=-1&player=12
+    
+
+        # Send a GET request to the webpage
+    response = requests.get(url)
+
+        # Check if the request was successful
+    if response.status_code == 200:
+            # Parse the HTML content of the webpage
+            soup = BeautifulSoup(response.content, "html.parser")
+
+            # Find the table element
+            table = soup.find('table', class_='display matches')
+        
+            if table:
+                # Find all thead elements within the table
+                thead_elements = table.find_all('thead')
+        
+                # Iterate over the thead elements
+                for i in range(len(thead_elements) - 1):
+                    # Extract text from the thead element
+                    thead_text = thead_elements[i].get_text(strip=True)
+                    print(thead_text)
+            
+                    # Find all tr elements between this thead and the next one
+                    tr_elements = thead_elements[i].find_all_next("tr", class_=lambda c: c and c.startswith('gradeA'), until=thead_elements[i + 1])
+                    print(len(tr_elements))
+                    print(thead_elements[i+1].get_text(strip=True))
+            
+                    # Iterate over the tr elements
+                    for tr in tr_elements:
+                        # Find all <td> elements within the <tr> element
+                        td_elements = tr.find_all("td")
+                
+                        # Extract text from all <td> elements within the tr
+                        titles = [td.text.strip() for td in td_elements if td.get('class') and 'round' in td.get('class')]
+                        print(titles[0])
+            else:
+                print("Table with class 'display matches' not found.")
+
 
             
 if __name__ == "__main__":
@@ -236,3 +292,4 @@ if __name__ == "__main__":
     #player_advancement()
     #player_recent_matches()
     get_table_elements()
+    #get_it()
